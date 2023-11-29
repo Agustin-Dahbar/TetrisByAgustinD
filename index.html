@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Javascript</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="Tablero.js"></script>
+    <script src="tetrimino.js"></script>
+</head>
+
+<body>
+    <style>
+    body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    }
+
+    canvas {
+    filter: drop-shadow(5px 5px 2px rgba(0, 0, 0, 0.4));
+    }
+    </style>
+
+<script>
+
+//La función setup es nativa de p5.js y sirve para ajustar las propiedades iniciales de nuestros objetos y variables
+const MARGEN_TABLERO = 10
+
+//VARIABLES Y FUNCIONES GLOBALES
+function setup() {
+    createCanvas(900, 600) //crea un canvas
+    tablero = new Tablero()
+    crearTetriminos()
+    tetrimino = new Tetrimino() // INSTANCIA DE CLASE Tetrimino
+    resizeCanvas(
+    tablero.ancho + 2 * MARGEN_TABLERO,
+    tablero.alto + 2 * MARGEN_TABLERO + 2*tablero.lado_celda
+  )
+}
+
+
+
+let regulador_velocidad_teclas = 0 
+//Regula la velocidad de las teclas y en consecuencia la velocidad de mov de los tetriminos. Profundizada en "manejadorDeTeclas".
+let regulador_de_caida = 0
+//Regula la velocidad de caída de los tetriminos. Explicada en profundidad en "setInterval"
+let puntaje = 0
+//Se encarga de contar las lineas completadas. Es el puntaje logrado por el jugador, se muestra en pantalla.
+
+
+
+/* Generación de fondo dinámico*/
+
+// Estas variables definen el deg y el color del fondo.
+let angulo_fondo = Math.random() * 360
+let color_fondo = Math.random() * 360
+//No multiplica, indica que el maximo numero del math random es 360.
+11
+// Funcion que se encarga de cambiar dinámicamente el color de fondo.
+setInterval(() => {
+    document.body.style.background = 
+    `linear-gradient(${angulo_fondo}deg,              
+    hsl(${color_fondo},100%,52%),
+    hsl(${color_fondo},100%,0%)
+    )`
+    angulo_fondo += Math.random() //estas variables deben volverse a escribir para que esten dentro del bucle.
+    color_fondo += Math.random() //solo con las declaraciones globales se ejecutaria unicamente la primera vez.
+  }, 20); //20 milisegundos, representa el tiempo que tarda en cambiarse el color del fondo.
+
+
+// Función que crea un bucle que ejecuta una función anónima cada cierto tiempo (20milisegundos) para cambiar el fondo de la pagina.
+
+//Dentro de la funcion se asigna un nuevo valor al fondo de "document.body...",
+
+// La asignacion se realiza mediante ciertos datos inmutables predefinidos y datos mutables representados por
+//plantillas literales $(). Las plantillas toman las variables angulo/tono_fondo.
+
+// Para que en cada iteracion del bucle estas variables cambien de valor se le aplica una suma con "Math.random".
+
+//A las variables se les sumara el numero generado con 'Math.random', al numero que ya obtuvieron de la ultima iteración
+// al superar 360 (lo maximo en calculos con HSL) se reiniciara el conteo a 0 y volvera a contar.
+
+
+//
+
+
+
+
+//DETERMINA EL TIEMPO EN QUE CAERÁN LOS TETRIMINOS DE FORMA NATURAL, SIN LA INTERVENCIÓN DEL USUARIO. SIN ESTA FUNCION, NO CAEN. 
+
+setInterval(() => {              
+    tetrimino.moverAbajo()
+  }, 300);  //Este ultimo valor es quien determina la velocidad de caída natural.
+
+// No cambiar los nombres de las funciones "setInterval" ya que dejarán  de funcionar debido a que es una función incorporada de JavaScript que se utiliza para ejecutar una funcionalidad repetidamente en intervalos regulares de tiempo. 
+
+//Este fenomeno es similar al de los bucles, esta funcionalidad permite recrear un comportamiento repetitivo en el tiempo.
+
+
+
+
+//La función draw es nativa de p5.js y sirve para dar instrucciones precisas de dibujo sobre el canvas
+//Se ejecuta, lo que hace que en cada iteración se ejecuten sus funciones anidadas en orden.
+
+function draw() { 
+    clear()
+    dibujarPuntaje()
+    tablero.dibujar()
+    tetrimino.dibujar()
+    manejadorDeTeclas()
+}
+
+function dibujarPuntaje() {
+    push()
+    textSize(20)
+    strokeWeight(2)
+    stroke("black")
+    fill("white")
+    text(
+    "Puntaje: " + puntaje,  
+    tablero.posición.x,
+    tablero.posición.y - tablero.lado_celda / 2
+    )
+    pop()
+}
+
+
+
+
+// Se inicializa con un valor de 100 una variable que representa la velocidad máxima de procesamiento de las teclas
+let límite_regulador_velocidad_teclas = 100
+
+// millis() es una función de p5.js que devuelve el tiempo en milisegundos transcurrido desde que se cargó la página o se inició el canvas 
+//Esto se utiliza para medir el tiempo entre dos pulsaciones de teclas. 
+// ' millis() - regulador_velocidad_teclas ' da el tiempo entre la última pulsación de tecla(reg..) y el tiempo actual(millis) mediante 
+//Si pasaron 15000 milisegundos de inicio del juego y se realiza una pulsacion de teclas, se le restará a ese millis(15000), el tiempo que era cuando sucedió la anterior pulsacion de teclas (por ej: en 12000 millis), la diferencia entre las pulsaciones es de 3000 millis, entonces en este caso al ser mayor a 100 (limite_regulador..) funcionará
+//la pulsación de teclas, cualquiera de ellas, que son los proximos if's de la funcion 'manejadorDeTeclas'
+
+function manejadorDeTeclas() {                // 100
+if (millis() - regulador_velocidad_teclas < límite_regulador_velocidad_teclas)
+    {return}   //Si pasan menos de 100 milisegundos ninguna pulsación de tecla funcionará                                    
+    límite_regulador_velocidad_teclas = 100 // Estas actualizaciones establecem un nuevo punto de referencia para medir el tiempo entre las pulsaciones de teclas.
+    regulador_velocidad_teclas = millis()
+
+if (keyIsDown(RIGHT_ARROW)) {    
+    tetrimino.moverDerecha()
+    regulador_de_caida = millis() //Esta actualizacion es importante para controlar la velocidad de caída del tetrimino o para limitar la velocidad de las rotaciones. 
+}                                 
+
+if (keyIsDown(LEFT_ARROW)) {
+    tetrimino.moverIzquierda()
+    regulador_de_caida = millis()
+}
+
+if (keyIsDown(DOWN_ARROW)) {
+    tetrimino.moverAbajo()
+    regulador_de_caida = millis()
+}
+
+if (keyIsDown(UP_ARROW)) {
+    límite_regulador_velocidad_teclas = 140  //Limita cada cuanto se pueda realizar una rotacion (140 milisegundos)
+    tetrimino.girar()
+    regulador_de_caida = millis()
+}
+
+if (keyIsDown(32)) {
+    límite_regulador_velocidad_teclas = 200 
+    tetrimino.ponerEnElFondo()
+    regulador_de_caida = millis()
+}
+}
+
+</script>
+
+</body>
+
+</html>
